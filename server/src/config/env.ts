@@ -17,6 +17,19 @@ const envSchema = z.object({
     .default('development'),
   CLIENT_URL: z.string().url().default('http://localhost:5173'),
   API_PREFIX: z.string().default('/api/v1'),
+  DATABASE_URL: z
+    .string()
+    .min(1, 'DATABASE_URL is required')
+    .default('postgresql://lifeline_user:lifeline_secret_2026@localhost:5432/lifeline_db?schema=public'),
+  REDIS_URL: z.string().default('redis://localhost:6379'),
+  JWT_ACCESS_SECRET: z
+    .string()
+    .min(16, 'JWT_ACCESS_SECRET must be at least 16 characters long')
+    .default('dev_access_secret_change_in_production_min_32_chars_long'),
+  JWT_REFRESH_SECRET: z
+    .string()
+    .min(16, 'JWT_REFRESH_SECRET must be at least 16 characters long')
+    .default('dev_refresh_secret_change_in_production_min_32_chars_long'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
