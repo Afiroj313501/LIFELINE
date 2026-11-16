@@ -20,7 +20,7 @@ const envSchema = z.object({
   DATABASE_URL: z
     .string()
     .min(1, 'DATABASE_URL is required')
-    .default('postgresql://lifeline_user:lifeline_secret_2026@localhost:5432/lifeline_db?schema=public'),
+    .default('postgresql://lifeline_user:lifeline_secret_2026@localhost:5433/lifeline_db?schema=public'),
   REDIS_URL: z.string().default('redis://localhost:6379'),
   JWT_ACCESS_SECRET: z
     .string()
