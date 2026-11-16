@@ -122,6 +122,20 @@ export class AuthController {
       next(error);
     }
   };
+
+  public getMe = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        throw new UnauthorizedError('User session not found');
+      }
+
+      const user = await authService.getCurrentUser(userId);
+      sendSuccess(res, { user }, 'User profile retrieved successfully', 200);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const authController = new AuthController();
