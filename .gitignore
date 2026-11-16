@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Testing and Coverage
+coverage/
+*.lcov
+.nyc_output/
+playwright-report/
+test-results/
+
+# Production Builds
+dist/
+build/
+.next/
+out/
+
+# Environment Variables & Secrets (CRITICAL)
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor & OS Files
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+Thumbs.db
+[Dd]esktop.ini
+.DS_Store
+
+# Prisma & Database Local Artifacts
+server/prisma/*.db
+server/prisma/*.db-journal
+*.sqlite
+
+# Temporary & Cache
+.temp/
+.cache/
+.turbo/
