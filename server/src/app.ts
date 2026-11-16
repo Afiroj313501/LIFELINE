@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { env } from './config/env';
 import { prisma } from './services/prisma';
 import authRoutes from './modules/auth/auth.routes';
+import donorRoutes from './modules/donors/donors.routes';
 import { errorHandler } from './middleware/error';
 
 export const createApp = (): express.Application => {
@@ -73,6 +74,7 @@ export const createApp = (): express.Application => {
 
   // Domain API Routes
   app.use(`${env.API_PREFIX}/auth`, authRoutes);
+  app.use(`${env.API_PREFIX}/donors`, donorRoutes);
 
   // 404 handler for unmatched routes
   app.use((_req: Request, res: Response) => {
