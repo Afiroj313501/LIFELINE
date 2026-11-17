@@ -6,6 +6,7 @@ import { env } from './config/env';
 import { prisma } from './services/prisma';
 import authRoutes from './modules/auth/auth.routes';
 import donorRoutes from './modules/donors/donors.routes';
+import bloodRequestRoutes from './modules/blood-requests/blood-requests.routes';
 import { errorHandler } from './middleware/error';
 
 export const createApp = (): express.Application => {
@@ -75,6 +76,7 @@ export const createApp = (): express.Application => {
   // Domain API Routes
   app.use(`${env.API_PREFIX}/auth`, authRoutes);
   app.use(`${env.API_PREFIX}/donors`, donorRoutes);
+  app.use(`${env.API_PREFIX}/blood-requests`, bloodRequestRoutes);
 
   // 404 handler for unmatched routes
   app.use((_req: Request, res: Response) => {
