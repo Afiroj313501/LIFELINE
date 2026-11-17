@@ -30,6 +30,16 @@ export const createBloodRequestSchema = z.object({
     }),
 });
 
+export const updateRequestStatusSchema = z.object({
+  status: z.nativeEnum(RequestStatus),
+  reviewNotes: z.string().max(500, 'Review notes cannot exceed 500 characters').optional(),
+});
+
+export const respondToRequestSchema = z.object({
+  unitsPledged: z.number().int().min(1, 'At least 1 unit must be pledged').max(5).default(1),
+  note: z.string().max(300, 'Note cannot exceed 300 characters').optional(),
+});
+
 export const listBloodRequestsQuerySchema = z.object({
   bloodGroup: z.nativeEnum(BloodGroup).optional(),
   division: z.string().trim().optional(),
@@ -48,4 +58,6 @@ export const listBloodRequestsQuerySchema = z.object({
 });
 
 export type CreateBloodRequestInput = z.infer<typeof createBloodRequestSchema>;
+export type UpdateRequestStatusInput = z.infer<typeof updateRequestStatusSchema>;
+export type RespondToRequestInput = z.infer<typeof respondToRequestSchema>;
 export type ListBloodRequestsQueryInput = z.infer<typeof listBloodRequestsQuerySchema>;
