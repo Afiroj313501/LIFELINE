@@ -9,6 +9,8 @@ import donorRoutes from './modules/donors/donors.routes';
 import bloodRequestRoutes from './modules/blood-requests/blood-requests.routes';
 import matchingRoutes from './modules/matching/matching.routes';
 import notificationRoutes from './modules/notifications/notifications.routes';
+import organizationRoutes from './modules/organizations/organizations.routes';
+import volunteerRoutes from './modules/volunteers/volunteers.routes';
 import { errorHandler } from './middleware/error';
 
 export const createApp = (): express.Application => {
@@ -81,6 +83,8 @@ export const createApp = (): express.Application => {
   app.use(`${env.API_PREFIX}/blood-requests`, bloodRequestRoutes);
   app.use(`${env.API_PREFIX}/matching`, matchingRoutes);
   app.use(`${env.API_PREFIX}/notifications`, notificationRoutes);
+  app.use(`${env.API_PREFIX}/organizations`, organizationRoutes);
+  app.use(`${env.API_PREFIX}/volunteers`, volunteerRoutes);
 
   // 404 handler for unmatched routes
   app.use((_req: Request, res: Response) => {
