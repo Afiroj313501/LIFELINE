@@ -2,8 +2,19 @@ import { Request, Response, NextFunction } from 'express';
 import { donorsService } from './donors.service';
 import { sendSuccess } from '../../common/response';
 import { UnauthorizedError } from '../../common/errors';
+import { searchDonorsQuerySchema } from './donors.validator';
 
 export class DonorsController {
+  public searchDonors = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const validatedQuery = searchDonorsQuerySchema.parse(req.query);
+      const result = await donorsService.searchDonors(validatedQuery);
+      sendSuccess(res, result, 'Donors retrieved successfully', 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   public getMyProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user?.userId;

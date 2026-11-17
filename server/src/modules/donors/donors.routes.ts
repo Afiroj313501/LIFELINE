@@ -9,6 +9,9 @@ import {
 
 const router = Router();
 
+// Public discovery endpoint: Patients / public can find compatible donors in their area
+router.get('/search', donorsController.searchDonors);
+
 // Protected donor profile management routes
 router.use(authenticate);
 

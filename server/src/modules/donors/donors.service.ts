@@ -1,6 +1,6 @@
-import { DonorProfile, Role } from '@prisma/client';
+import { DonorProfile, Role, Prisma, BloodGroup } from '@prisma/client';
 import { prisma } from '../../services/prisma';
-import { UpdateDonorProfileInput } from './donors.validator';
+import { UpdateDonorProfileInput, SearchDonorsQueryInput } from './donors.validator';
 import { NotFoundError } from '../../common/errors';
 
 export const MIN_DONATION_INTERVAL_DAYS = 90;
@@ -15,6 +15,30 @@ export interface MedicalEligibility {
 export interface DonorProfileWithEligibility {
   profile: DonorProfile;
   eligibility: MedicalEligibility;
+}
+
+export interface PublicDonorCard {
+  id: string;
+  displayName: string;
+  bloodGroup: BloodGroup;
+  division: string;
+  district: string;
+  upazila: string;
+  isAvailable: boolean;
+  totalDonations: number;
+  avatarUrl: string | null;
+  memberSince: Date;
+  eligibility: MedicalEligibility;
+}
+
+export interface PaginatedResult<T> {
+  items: T[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }
 
 /**
@@ -208,6 +232,89 @@ export class DonorsService {
     return {
       profile: updated,
       eligibility,
+    };
+  }
+
+  /**
+   * Privacy-preserving public donor search.
+   * STRICT ZERO-TRUST: Never exposes phone numbers, exact coordinates, or internal user IDs.
+   */
+  public async searchDonors(
+    query: SearchDonorsQueryInput
+  ): Promise<PaginatedResult<PublicDonorCard>> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.DonorProfileWhereInput = {
+      user: { isDeactivated: false },
+    };
+
+    if (query.bloodGroup) {
+      where.bloodGroup = query.bloodGroup;
+    }
+    if (query.division) {
+      where.division = { equals: query.division, mode: 'insensitive' };
+    }
+    if (query.district) {
+      where.district = { equals: query.district, mode: 'insensitive' };
+    }
+    if (query.upazila) {
+      where.upazila = { equals: query.upazila, mode: 'insensitive' };
+    }
+    if (query.isAvailableOnly) {
+      where.isAvailable = true;
+    }
+
+    const [total, profiles] = await Promise.all([
+      prisma.donorProfile.count({ where }),
+      prisma.donorProfile.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
+              createdAt: true,
+            },
+          },
+        },
+        orderBy: [{ isAvailable: 'desc' }, { totalDonations: 'desc' }],
+      }),
+    ]);
+
+    const items: PublicDonorCard[] = profiles.map((p) => {
+      const eligibility = calculateMedicalEligibility(p.lastDonationDate, p.weightKg);
+      // Privacy-safe masked display name: "Rahim A."
+      const lastInitial = p.user.lastName ? `${p.user.lastName.charAt(0)}.` : '';
+      const displayName = `${p.user.firstName} ${lastInitial}`.trim();
+
+      return {
+        id: p.id,
+        displayName,
+        bloodGroup: p.bloodGroup,
+        division: p.division,
+        district: p.district,
+        upazila: p.upazila,
+        isAvailable: p.isAvailable,
+        totalDonations: p.totalDonations,
+        avatarUrl: p.user.avatarUrl,
+        memberSince: p.user.createdAt,
+        eligibility,
+      };
+    });
+
+    return {
+      items,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 }

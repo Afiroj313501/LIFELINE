@@ -30,5 +30,25 @@ export const toggleAvailabilitySchema = z.object({
   isAvailable: z.boolean(),
 });
 
+export const searchDonorsQuerySchema = z.object({
+  bloodGroup: z.nativeEnum(BloodGroup).optional(),
+  division: z.string().trim().optional(),
+  district: z.string().trim().optional(),
+  upazila: z.string().trim().optional(),
+  isAvailableOnly: z
+    .string()
+    .optional()
+    .transform((val) => val === undefined || val === 'true'),
+  page: z
+    .string()
+    .optional()
+    .transform((val) => (val ? Math.max(1, parseInt(val, 10)) : 1)),
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? Math.min(50, Math.max(1, parseInt(val, 10))) : 10)),
+});
+
 export type UpdateDonorProfileInput = z.infer<typeof updateDonorProfileSchema>;
 export type ToggleAvailabilityInput = z.infer<typeof toggleAvailabilitySchema>;
+export type SearchDonorsQueryInput = z.infer<typeof searchDonorsQuerySchema>;
