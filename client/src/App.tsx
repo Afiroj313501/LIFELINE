@@ -7,11 +7,108 @@ import {
   MapPin, 
   Activity, 
   ArrowRight,
-  CheckCircle2
+  CheckCircle2,
+  SlidersHorizontal,
+  Flame
 } from 'lucide-react';
+import { CascadingLocationSelect, LocationValue } from './components/common/CascadingLocationSelect';
+import { EmergencyMap, MapBloodRequest, MapDonorLocation } from './components/map/EmergencyMap';
 
 export const App: React.FC = () => {
   const [apiStatus, setApiStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
+  const [locationFilter, setLocationFilter] = useState<LocationValue>({
+    division: '',
+    district: '',
+    upazila: '',
+  });
+
+  // Sample seed emergency requests for live visualization
+  const sampleRequests: MapBloodRequest[] = [
+    {
+      id: 'req-dhaka-1',
+      patientName: 'Kazi Farhana',
+      bloodGroup: 'O_POSITIVE',
+      unitsNeeded: 2,
+      urgencyLevel: 'CRITICAL',
+      hospitalName: 'Dhaka Medical College Hospital',
+      division: 'Dhaka',
+      district: 'Dhaka',
+      upazila: 'Shahbagh',
+    },
+    {
+      id: 'req-ctg-1',
+      patientName: 'Tanvir Hossain',
+      bloodGroup: 'B_POSITIVE',
+      unitsNeeded: 1,
+      urgencyLevel: 'URGENT',
+      hospitalName: 'Chittagong Medical College Hospital',
+      division: 'Chattogram',
+      district: 'Chattogram',
+      upazila: 'Panchlaish',
+    },
+    {
+      id: 'req-syl-1',
+      patientName: 'Nazmun Nahar',
+      bloodGroup: 'AB_NEGATIVE',
+      unitsNeeded: 1,
+      urgencyLevel: 'NORMAL',
+      hospitalName: 'Sylhet MAG Osmani Medical College',
+      division: 'Sylhet',
+      district: 'Sylhet',
+      upazila: 'Sylhet Sadar',
+    },
+    {
+      id: 'req-raj-1',
+      patientName: 'Ariful Islam',
+      bloodGroup: 'O_NEGATIVE',
+      unitsNeeded: 3,
+      urgencyLevel: 'CRITICAL',
+      hospitalName: 'Rajshahi Medical College Hospital',
+      division: 'Rajshahi',
+      district: 'Rajshahi',
+      upazila: 'Rajpara',
+    },
+  ];
+
+  // Privacy-masked sample donors
+  const sampleDonors: MapDonorLocation[] = [
+    {
+      id: 'donor-1',
+      displayName: 'Rahim A.',
+      bloodGroup: 'O_POSITIVE',
+      division: 'Dhaka',
+      district: 'Dhaka',
+      upazila: 'Dhanmondi',
+      totalDonations: 6,
+    },
+    {
+      id: 'donor-2',
+      displayName: 'Fatima Z.',
+      bloodGroup: 'O_NEGATIVE',
+      division: 'Dhaka',
+      district: 'Dhaka',
+      upazila: 'Mirpur',
+      totalDonations: 4,
+    },
+    {
+      id: 'donor-3',
+      displayName: 'Kamal U.',
+      bloodGroup: 'B_POSITIVE',
+      division: 'Chattogram',
+      district: 'Chattogram',
+      upazila: 'Halishahar',
+      totalDonations: 11,
+    },
+    {
+      id: 'donor-4',
+      displayName: 'Shirin B.',
+      bloodGroup: 'AB_NEGATIVE',
+      division: 'Sylhet',
+      district: 'Sylhet',
+      upazila: 'Kotwali',
+      totalDonations: 2,
+    },
+  ];
 
   useEffect(() => {
     // Check connection with backend proxy /api/v1/health or /health
@@ -24,6 +121,18 @@ export const App: React.FC = () => {
   }, []);
 
   const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
+  const filteredRequests = sampleRequests.filter((req) => {
+    if (locationFilter.division && req.division !== locationFilter.division) return false;
+    if (locationFilter.district && req.district !== locationFilter.district) return false;
+    return true;
+  });
+
+  const filteredDonors = sampleDonors.filter((donor) => {
+    if (locationFilter.division && donor.division !== locationFilter.division) return false;
+    if (locationFilter.district && donor.district !== locationFilter.district) return false;
+    return true;
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800">
@@ -74,11 +183,10 @@ export const App: React.FC = () => {
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-8 text-sm font-semibold text-slate-600">
             <a href="#home" className="text-blood-600 font-bold transition-colors">Home</a>
+            <a href="#live-map" className="hover:text-blood-600 transition-colors">Emergency Map</a>
             <a href="#find-donors" className="hover:text-blood-600 transition-colors">Find Donors</a>
             <a href="#requests" className="hover:text-blood-600 transition-colors">Emergency Requests</a>
             <a href="#become-donor" className="hover:text-blood-600 transition-colors">Become a Donor</a>
-            <a href="#hospitals" className="hover:text-blood-600 transition-colors">Hospitals</a>
-            <a href="#about" className="hover:text-blood-600 transition-colors">About</a>
           </nav>
 
           {/* Action Buttons */}
@@ -93,9 +201,10 @@ export const App: React.FC = () => {
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Main Content */}
       <main className="flex-1">
-        <section className="relative overflow-hidden pt-12 pb-20 lg:pt-20 lg:pb-28 bg-gradient-to-b from-white via-slate-50 to-slate-100">
+        {/* Hero Section */}
+        <section className="relative overflow-hidden pt-12 pb-16 lg:pt-16 lg:pb-24 bg-gradient-to-b from-white via-slate-50 to-slate-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blood-50 border border-blood-200 text-blood-700 text-xs font-bold uppercase tracking-wider mb-6">
@@ -115,11 +224,11 @@ export const App: React.FC = () => {
               {/* Action Buttons */}
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <a 
-                  href="#emergency-request"
+                  href="#live-map"
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-base font-bold text-white bg-blood-600 hover:bg-blood-700 active:bg-blood-800 shadow-lg shadow-blood-600/30 transition-all group"
                 >
                   <AlertCircle className="w-5 h-5" />
-                  Post Emergency Request
+                  View Live Map & Requests
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </a>
 
@@ -132,9 +241,9 @@ export const App: React.FC = () => {
                 </a>
               </div>
 
-              {/* Quick Blood Group Availability Selector Preview */}
-              <div className="mt-12 pt-8 border-t border-slate-200">
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-600 mb-4">
+              {/* Quick Blood Group Availability Selector */}
+              <div className="mt-10 pt-6 border-t border-slate-200">
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-600 mb-3">
                   Quick Search by Blood Group
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
@@ -152,11 +261,65 @@ export const App: React.FC = () => {
           </div>
         </section>
 
+        {/* Phase 7: Live Emergency & Location Map Section */}
+        <section id="live-map" className="py-16 bg-white border-y border-slate-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+              <div>
+                <div className="inline-flex items-center gap-2 text-blood-600 font-bold text-xs uppercase tracking-wider mb-2">
+                  <Flame className="w-4 h-4 fill-blood-600" />
+                  Live Geospatial Coordination
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-black text-navy-900 tracking-tight">
+                  Emergency Blood & Donor Radar
+                </h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  Select your administrative region to zoom in on active hospital requests and nearby available donors.
+                </p>
+              </div>
+
+              {/* Reset filter button */}
+              {(locationFilter.division || locationFilter.district || locationFilter.upazila) && (
+                <button
+                  onClick={() => setLocationFilter({ division: '', district: '', upazila: '' })}
+                  className="text-xs font-bold text-blood-600 hover:text-blood-700 underline self-start md:self-auto"
+                >
+                  Reset Region Filter
+                </button>
+              )}
+            </div>
+
+            {/* Cascading Administrative Region Selector */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 shadow-sm mb-6">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
+                <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
+                Filter by Administrative Hierarchy (বিভাগ, জেলা, উপজেলা)
+              </div>
+              <CascadingLocationSelect
+                value={locationFilter}
+                onChange={setLocationFilter}
+              />
+            </div>
+
+            {/* Interactive Leaflet Map */}
+            <EmergencyMap
+              requests={filteredRequests}
+              donors={filteredDonors}
+              selectedDivision={locationFilter.division}
+              selectedDistrict={locationFilter.district}
+              height="520px"
+              onRequestSelect={(id) => {
+                alert(`Viewing details for request ID: ${id}`);
+              }}
+            />
+          </div>
+        </section>
+
         {/* Core Pillars Feature Grid */}
-        <section className="py-16 bg-white border-y border-slate-200">
+        <section className="py-16 bg-slate-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 hover:border-blood-200 transition-all">
+              <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:border-blood-200 transition-all">
                 <div className="w-12 h-12 rounded-xl bg-blood-100 flex items-center justify-center text-blood-600 mb-4">
                   <MapPin className="w-6 h-6" />
                 </div>
@@ -166,7 +329,7 @@ export const App: React.FC = () => {
                 </p>
               </div>
 
-              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 hover:border-blood-200 transition-all">
+              <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:border-blood-200 transition-all">
                 <div className="w-12 h-12 rounded-xl bg-navy-100 flex items-center justify-center text-navy-900 mb-4">
                   <ShieldCheck className="w-6 h-6" />
                 </div>
@@ -176,7 +339,7 @@ export const App: React.FC = () => {
                 </p>
               </div>
 
-              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 hover:border-blood-200 transition-all">
+              <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:border-blood-200 transition-all">
                 <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700 mb-4">
                   <Activity className="w-6 h-6" />
                 </div>
