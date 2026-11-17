@@ -11,6 +11,7 @@ import matchingRoutes from './modules/matching/matching.routes';
 import notificationRoutes from './modules/notifications/notifications.routes';
 import organizationRoutes from './modules/organizations/organizations.routes';
 import volunteerRoutes from './modules/volunteers/volunteers.routes';
+import adminRoutes from './modules/admin/admin.routes';
 import { errorHandler } from './middleware/error';
 
 export const createApp = (): express.Application => {
@@ -85,6 +86,7 @@ export const createApp = (): express.Application => {
   app.use(`${env.API_PREFIX}/notifications`, notificationRoutes);
   app.use(`${env.API_PREFIX}/organizations`, organizationRoutes);
   app.use(`${env.API_PREFIX}/volunteers`, volunteerRoutes);
+  app.use(`${env.API_PREFIX}/admin`, adminRoutes);
 
   // 404 handler for unmatched routes
   app.use((_req: Request, res: Response) => {
