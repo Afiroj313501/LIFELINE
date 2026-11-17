@@ -1,4 +1,4 @@
-import { BloodGroup, RequestStatus, DonorProfile } from '@prisma/client';
+import { BloodGroup, RequestStatus } from '@prisma/client';
 import { prisma } from '../../services/prisma';
 import { calculateMedicalEligibility, MedicalEligibility } from '../donors/donors.service';
 import { NotFoundError, BadRequestError } from '../../common/errors';
