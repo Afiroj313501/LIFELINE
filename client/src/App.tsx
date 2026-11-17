@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { CascadingLocationSelect, LocationValue } from './components/common/CascadingLocationSelect';
 import { EmergencyMap, MapBloodRequest, MapDonorLocation } from './components/map/EmergencyMap';
+import { NotificationBell } from './components/notifications/NotificationBell';
 
 export const App: React.FC = () => {
   const [apiStatus, setApiStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
@@ -191,6 +192,7 @@ export const App: React.FC = () => {
 
           {/* Action Buttons */}
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <button className="px-4 py-2 text-sm font-bold text-navy-900 hover:text-blood-600 transition-colors">
               Sign In
             </button>
