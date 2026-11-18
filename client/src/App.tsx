@@ -11,11 +11,15 @@ import {
   SlidersHorizontal,
   Flame,
   LogOut,
+  PlusCircle,
   User as UserIcon
 } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { SignInModal } from './components/auth/SignInModal';
 import { RegisterModal } from './components/auth/RegisterModal';
+import { CreateRequestModal } from './components/requests/CreateRequestModal';
+import { EmergencyFeed, EmergencyRequestItem } from './components/requests/EmergencyFeed';
+import { DonorSearchSection } from './components/donors/DonorSearchSection';
 import { CascadingLocationSelect, LocationValue } from './components/common/CascadingLocationSelect';
 import { EmergencyMap, MapBloodRequest, MapDonorLocation } from './components/map/EmergencyMap';
 import { NotificationBell } from './components/notifications/NotificationBell';
@@ -25,14 +29,16 @@ export const App: React.FC = () => {
   const [apiStatus, setApiStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isCreateRequestOpen, setIsCreateRequestOpen] = useState(false);
+
   const [locationFilter, setLocationFilter] = useState<LocationValue>({
     division: '',
     district: '',
     upazila: '',
   });
 
-  // Sample seed emergency requests for live visualization
-  const sampleRequests: MapBloodRequest[] = [
+  // Seed / active blood requests state
+  const [requests, setRequests] = useState<EmergencyRequestItem[]>([
     {
       id: 'req-dhaka-1',
       patientName: 'Kazi Farhana',
@@ -43,6 +49,11 @@ export const App: React.FC = () => {
       division: 'Dhaka',
       district: 'Dhaka',
       upazila: 'Shahbagh',
+      medicalReason: 'Trauma & Emergency Surgery',
+      status: 'VERIFIED',
+      requiredByDate: new Date(Date.now() + 6 * 3600000).toISOString(),
+      createdAt: new Date().toISOString(),
+      _count: { donorResponses: 2 },
     },
     {
       id: 'req-ctg-1',
@@ -54,6 +65,11 @@ export const App: React.FC = () => {
       division: 'Chattogram',
       district: 'Chattogram',
       upazila: 'Panchlaish',
+      medicalReason: 'Dengue Platelet Need',
+      status: 'BROADCASTING',
+      requiredByDate: new Date(Date.now() + 14 * 3600000).toISOString(),
+      createdAt: new Date(Date.now() - 3600000).toISOString(),
+      _count: { donorResponses: 1 },
     },
     {
       id: 'req-syl-1',
@@ -65,6 +81,11 @@ export const App: React.FC = () => {
       division: 'Sylhet',
       district: 'Sylhet',
       upazila: 'Sylhet Sadar',
+      medicalReason: 'Scheduled C-Section Delivery',
+      status: 'VERIFIED',
+      requiredByDate: new Date(Date.now() + 28 * 3600000).toISOString(),
+      createdAt: new Date(Date.now() - 7200000).toISOString(),
+      _count: { donorResponses: 0 },
     },
     {
       id: 'req-raj-1',
@@ -76,8 +97,13 @@ export const App: React.FC = () => {
       division: 'Rajshahi',
       district: 'Rajshahi',
       upazila: 'Rajpara',
+      medicalReason: 'Thalassemia Severe Anemia',
+      status: 'BROADCASTING',
+      requiredByDate: new Date(Date.now() + 4 * 3600000).toISOString(),
+      createdAt: new Date(Date.now() - 1800000).toISOString(),
+      _count: { donorResponses: 3 },
     },
-  ];
+  ]);
 
   // Privacy-masked sample donors
   const sampleDonors: MapDonorLocation[] = [
@@ -88,7 +114,7 @@ export const App: React.FC = () => {
       division: 'Dhaka',
       district: 'Dhaka',
       upazila: 'Dhanmondi',
-      totalDonations: 6,
+      totalDonations: 8,
     },
     {
       id: 'donor-2',
@@ -106,7 +132,7 @@ export const App: React.FC = () => {
       division: 'Chattogram',
       district: 'Chattogram',
       upazila: 'Halishahar',
-      totalDonations: 11,
+      totalDonations: 12,
     },
     {
       id: 'donor-4',
@@ -115,7 +141,7 @@ export const App: React.FC = () => {
       division: 'Sylhet',
       district: 'Sylhet',
       upazila: 'Kotwali',
-      totalDonations: 2,
+      totalDonations: 3,
     },
   ];
 
@@ -131,7 +157,20 @@ export const App: React.FC = () => {
 
   const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
-  const filteredRequests = sampleRequests.filter((req) => {
+  // Map representation derived from requests state
+  const mapRequests: MapBloodRequest[] = requests.map((r) => ({
+    id: r.id,
+    patientName: r.patientName,
+    bloodGroup: r.bloodGroup,
+    unitsNeeded: r.unitsNeeded,
+    urgencyLevel: r.urgencyLevel,
+    hospitalName: r.hospitalName,
+    division: r.division,
+    district: r.district,
+    upazila: r.upazila,
+  }));
+
+  const filteredMapRequests = mapRequests.filter((req) => {
     if (locationFilter.division && req.division !== locationFilter.division) return false;
     if (locationFilter.district && req.district !== locationFilter.district) return false;
     return true;
@@ -142,6 +181,26 @@ export const App: React.FC = () => {
     if (locationFilter.district && donor.district !== locationFilter.district) return false;
     return true;
   });
+
+  const handleRequestCreated = (newReq: any) => {
+    const formatted: EmergencyRequestItem = {
+      id: newReq.id || `req-${Date.now()}`,
+      patientName: newReq.patientName,
+      bloodGroup: newReq.bloodGroup,
+      unitsNeeded: newReq.unitsNeeded,
+      urgencyLevel: newReq.urgencyLevel,
+      hospitalName: newReq.hospitalName,
+      division: newReq.division,
+      district: newReq.district,
+      upazila: newReq.upazila,
+      medicalReason: newReq.medicalReason,
+      status: newReq.status || 'PENDING',
+      requiredByDate: newReq.requiredByDate,
+      createdAt: newReq.createdAt || new Date().toISOString(),
+      _count: { donorResponses: 0 },
+    };
+    setRequests((prev) => [formatted, ...prev]);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800">
@@ -172,7 +231,7 @@ export const App: React.FC = () => {
       </aside>
 
       {/* Main Navigation */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
@@ -191,16 +250,24 @@ export const App: React.FC = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-8 text-sm font-semibold text-slate-600">
-            <a href="#home" className="text-blood-600 font-bold transition-colors">Home</a>
+            <a href="#home" className="hover:text-blood-600 transition-colors">Home</a>
             <a href="#live-map" className="hover:text-blood-600 transition-colors">Emergency Map</a>
+            <a href="#requests" className="hover:text-blood-600 transition-colors">Active Requests</a>
             <a href="#find-donors" className="hover:text-blood-600 transition-colors">Find Donors</a>
-            <a href="#requests" className="hover:text-blood-600 transition-colors">Emergency Requests</a>
-            <a href="#become-donor" className="hover:text-blood-600 transition-colors">Become a Donor</a>
           </nav>
 
           {/* Action Buttons */}
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsCreateRequestOpen(true)}
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-blood-600 hover:bg-blood-700 active:bg-blood-800 rounded-xl shadow-sm shadow-blood-600/20 transition-all"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              Post Request
+            </button>
+
             <NotificationBell />
+
             {user ? (
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200/80 px-3 py-1.5 rounded-xl border border-slate-200 transition">
@@ -234,7 +301,7 @@ export const App: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setIsRegisterOpen(true)}
-                  className="px-4 py-2 text-sm font-bold text-white bg-blood-600 hover:bg-blood-700 active:bg-blood-800 rounded-lg shadow-sm shadow-blood-600/20 transition-all"
+                  className="px-4 py-2 text-sm font-bold text-white bg-navy-900 hover:bg-navy-800 rounded-lg shadow-sm transition-all"
                 >
                   Register
                 </button>
@@ -247,7 +314,7 @@ export const App: React.FC = () => {
       {/* Main Content */}
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative overflow-hidden pt-12 pb-16 lg:pt-16 lg:pb-24 bg-gradient-to-b from-white via-slate-50 to-slate-100">
+        <section id="home" className="relative overflow-hidden pt-12 pb-16 lg:pt-16 lg:pb-24 bg-gradient-to-b from-white via-slate-50 to-slate-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blood-50 border border-blood-200 text-blood-700 text-xs font-bold uppercase tracking-wider mb-6">
@@ -266,14 +333,14 @@ export const App: React.FC = () => {
 
               {/* Action Buttons */}
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a 
-                  href="#live-map"
+                <button
+                  onClick={() => setIsCreateRequestOpen(true)}
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-base font-bold text-white bg-blood-600 hover:bg-blood-700 active:bg-blood-800 shadow-lg shadow-blood-600/30 transition-all group"
                 >
                   <AlertCircle className="w-5 h-5" />
-                  View Live Map & Requests
+                  Post Emergency Request
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </a>
+                </button>
 
                 <a 
                   href="#find-donors"
@@ -291,12 +358,13 @@ export const App: React.FC = () => {
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
                   {bloodGroups.map((group) => (
-                    <button
+                    <a
                       key={group}
+                      href="#requests"
                       className="px-4 py-2 rounded-lg bg-white border border-slate-200 hover:border-blood-500 hover:text-blood-600 hover:bg-blood-50/50 font-bold text-sm text-slate-700 shadow-sm transition-all"
                     >
                       {group}
-                    </button>
+                    </a>
                   ))}
                 </div>
               </div>
@@ -346,17 +414,34 @@ export const App: React.FC = () => {
 
             {/* Interactive Leaflet Map */}
             <EmergencyMap
-              requests={filteredRequests}
+              requests={filteredMapRequests}
               donors={filteredDonors}
               selectedDivision={locationFilter.division}
               selectedDistrict={locationFilter.district}
               height="520px"
-              onRequestSelect={(id) => {
-                alert(`Viewing details for request ID: ${id}`);
+              onRequestSelect={(_id) => {
+                const targetElement = document.getElementById('requests');
+                if (targetElement) {
+                  targetElement.scrollIntoView({ behavior: 'smooth' });
+                }
               }}
             />
           </div>
         </section>
+
+        {/* Live Active Requests Feed Section */}
+        <EmergencyFeed
+          requests={requests}
+          onRequireSignIn={() => setIsSignInOpen(true)}
+          onRequestUpdated={() => {
+            // Can reload requests if needed
+          }}
+        />
+
+        {/* Compatible Donor Directory Section */}
+        <DonorSearchSection
+          onRequestOpenModal={() => setIsCreateRequestOpen(true)}
+        />
 
         {/* Core Pillars Feature Grid */}
         <section className="py-16 bg-slate-50">
@@ -415,7 +500,14 @@ export const App: React.FC = () => {
         </div>
       </footer>
 
-      {/* Authentication Modals */}
+      {/* Modals */}
+      <CreateRequestModal
+        isOpen={isCreateRequestOpen}
+        onClose={() => setIsCreateRequestOpen(false)}
+        onRequestCreated={handleRequestCreated}
+        onRequireSignIn={() => setIsSignInOpen(true)}
+      />
+
       <SignInModal
         isOpen={isSignInOpen}
         onClose={() => setIsSignInOpen(false)}
