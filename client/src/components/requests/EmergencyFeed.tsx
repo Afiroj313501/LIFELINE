@@ -51,11 +51,12 @@ export const EmergencyFeed: React.FC<EmergencyFeedProps> = ({
   const [selectedBloodGroup, setSelectedBloodGroup] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [respondingId, setRespondingId] = useState<string | null>(null);
+  const [respondingBloodGroup, setRespondingBloodGroup] = useState<string>('');
   const [unitsPledged, setUnitsPledged] = useState(1);
   const [donorNote, setDonorNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   const bloodGroups = ['ALL', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
@@ -82,8 +83,20 @@ export const EmergencyFeed: React.FC<EmergencyFeedProps> = ({
     }
     if (!respondingId) return;
 
+    // Check blood group before submitting
+    if (!user.bloodGroup) {
+      setModalError('Please complete your donor profile with a blood group before pledging.');
+      return;
+    }
+    if (!isBloodCompatible(user.bloodGroup, respondingBloodGroup)) {
+      const donorBG = user.bloodGroup.replace('_POSITIVE', '+').replace('_NEGATIVE', '-');
+      const reqBG = respondingBloodGroup.replace('_POSITIVE', '+').replace('_NEGATIVE', '-');
+      setModalError(`Blood not matched! Your blood group (${donorBG}) cannot be donated to the requested group (${reqBG}).`);
+      return;
+    }
+
     setIsSubmitting(true);
-    setErrorMessage(null);
+    setModalError(null);
 
     try {
       await apiClient<any>(`/blood-requests/${respondingId}/respond`, {
@@ -94,7 +107,6 @@ export const EmergencyFeed: React.FC<EmergencyFeedProps> = ({
         }),
       });
 
-      // Use the logged‑in user's phone number for the success message (fallback to API if available)
       const phoneInfo = user.phoneNumber
         ? ` Your phone number (${user.phoneNumber}) has been shared with the requester.`
         : '';
@@ -102,11 +114,12 @@ export const EmergencyFeed: React.FC<EmergencyFeedProps> = ({
       setSuccessMessage(`Thank you! Your donation pledge has been submitted.${phoneInfo}`);
       setRespondingId(null);
       setDonorNote('');
+      setModalError(null);
       if (onRequestUpdated) onRequestUpdated();
 
-      setTimeout(() => setSuccessMessage(null), 5000);
+      setTimeout(() => setSuccessMessage(null), 8000);
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to submit response.');
+      setModalError(err instanceof Error ? err.message : 'Failed to submit response.');
     } finally {
       setIsSubmitting(false);
     }
@@ -170,13 +183,6 @@ export const EmergencyFeed: React.FC<EmergencyFeedProps> = ({
             <span>{successMessage}</span>
           </div>
         )}
-        {errorMessage && (
-          <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-sm flex items-center gap-3 animate-in fade-in">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-            <span>{errorMessage}</span>
-          </div>
-        )}
-
         {/* Request Cards Grid */}
         {filtered.length === 0 ? (
           <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 shadow-sm">
@@ -282,15 +288,8 @@ export const EmergencyFeed: React.FC<EmergencyFeedProps> = ({
                   onRequireSignIn();
                   return;
                 }
-                if (!user?.bloodGroup) {
-                  setErrorMessage('Please complete your donor profile with a blood group before pledging.');
-                  return;
-                }
-                // Compatibility check
-                if (!isBloodCompatible(user.bloodGroup as string, req.bloodGroup)) {
-                  setErrorMessage('Blood not matched: Your blood group cannot be donated to this request.');
-                  return;
-                }
+                setModalError(null);
+                setRespondingBloodGroup(req.bloodGroup);
                 setRespondingId(req.id);
               }}
               className="w-full py-2.5 px-4 rounded-xl bg-blood-600 hover:bg-blood-700 active:bg-blood-800 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2 group"
@@ -327,6 +326,13 @@ export const EmergencyFeed: React.FC<EmergencyFeedProps> = ({
                 Confirming will notify the patient's family and hospital staff that you intend to donate.
                 Only pledge if you are medically healthy and available to reach the hospital.
               </p>
+
+              {modalError && (
+                <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{modalError}</span>
+                </div>
+              )}
 
               <form onSubmit={handleRespond} className="space-y-4">
                 <div>

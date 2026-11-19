@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Heart, 
   Search, 
@@ -24,6 +24,7 @@ import { DonorSearchSection } from './components/donors/DonorSearchSection';
 import { CascadingLocationSelect, LocationValue } from './components/common/CascadingLocationSelect';
 import { EmergencyMap, MapBloodRequest, MapDonorLocation } from './components/map/EmergencyMap';
 import { NotificationBell } from './components/notifications/NotificationBell';
+import { apiClient } from './services/api';
 
 export const App: React.FC = () => {
   const { user, logout } = useAuth();
@@ -106,6 +107,23 @@ export const App: React.FC = () => {
       _count: { donorResponses: 3 },
     },
   ]);
+
+  const loadRequests = useCallback(async () => {
+    try {
+      const response = await apiClient<{ items: EmergencyRequestItem[] }>(
+        '/blood-requests?limit=50'
+      );
+      if (response.data?.items) {
+        setRequests(response.data.items);
+      }
+    } catch {
+      // Keep the demo requests visible when the API is unavailable.
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadRequests();
+  }, [loadRequests]);
 
   // Privacy-masked sample donors
   const sampleDonors: MapDonorLocation[] = [
@@ -440,7 +458,7 @@ export const App: React.FC = () => {
           requests={requests}
           onRequireSignIn={() => setIsSignInOpen(true)}
           onRequestUpdated={() => {
-            // Can reload requests if needed
+            void loadRequests();
           }}
         />
 
