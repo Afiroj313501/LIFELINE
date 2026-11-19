@@ -17,6 +17,7 @@ import {
 import { useAuth } from './context/AuthContext';
 import { SignInModal } from './components/auth/SignInModal';
 import { RegisterModal } from './components/auth/RegisterModal';
+import { ProfileModal } from './components/profile/ProfileModal';
 import { CreateRequestModal } from './components/requests/CreateRequestModal';
 import { EmergencyFeed, EmergencyRequestItem } from './components/requests/EmergencyFeed';
 import { DonorSearchSection } from './components/donors/DonorSearchSection';
@@ -29,6 +30,7 @@ export const App: React.FC = () => {
   const [apiStatus, setApiStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isCreateRequestOpen, setIsCreateRequestOpen] = useState(false);
 
   const [locationFilter, setLocationFilter] = useState<LocationValue>({
@@ -270,7 +272,11 @@ export const App: React.FC = () => {
 
             {user ? (
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200/80 px-3 py-1.5 rounded-xl border border-slate-200 transition">
+                <button
+                  onClick={() => setIsProfileOpen(true)}
+                  className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200/90 active:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200 transition text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-blood-500"
+                  title="View your donor profile & settings"
+                >
                   <div className="w-6 h-6 rounded-full bg-blood-600 text-white flex items-center justify-center text-xs font-bold">
                     {user.firstName ? user.firstName.charAt(0).toUpperCase() : <UserIcon className="w-3.5 h-3.5" />}
                   </div>
@@ -282,7 +288,7 @@ export const App: React.FC = () => {
                       {user.role}
                     </div>
                   </div>
-                </div>
+                </button>
                 <button
                   onClick={() => logout()}
                   title="Sign Out"
@@ -524,6 +530,11 @@ export const App: React.FC = () => {
           setIsRegisterOpen(false);
           setIsSignInOpen(true);
         }}
+      />
+
+      <ProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
       />
     </div>
   );
