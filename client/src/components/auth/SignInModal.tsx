@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { X, Lock, Mail, Eye, EyeOff, AlertCircle, Sparkles } from 'lucide-react';
+import { X, Lock, Mail, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 interface SignInModalProps {
   isOpen: boolean;
@@ -35,12 +35,6 @@ export const SignInModal: React.FC<SignInModalProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleDemoFill = (demoEmail: string) => {
-    setIdentifier(demoEmail);
-    setPassword('LifeLineSecure@2026');
-    setError(null);
   };
 
   return (
@@ -130,37 +124,6 @@ export const SignInModal: React.FC<SignInModalProps> = ({
           >
             {isSubmitting ? 'Signing In...' : 'Sign In to LifeLine'}
           </button>
-
-          {/* 1-Click Demo Fillers */}
-          <div className="pt-2 border-t border-slate-100">
-            <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              1-Click Demo Logins (Dev Mode)
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleDemoFill('admin@lifeline.org.bd')}
-                className="px-2.5 py-1 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition"
-              >
-                Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoFill('donor.op@lifeline.org.bd')}
-                className="px-2.5 py-1 text-[11px] font-semibold bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition"
-              >
-                Donor (O+)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoFill('volunteer@lifeline.org.bd')}
-                className="px-2.5 py-1 text-[11px] font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg transition"
-              >
-                Volunteer
-              </button>
-            </div>
-          </div>
 
           {/* Switch to Register */}
           <p className="text-center text-xs text-slate-500 pt-2">

@@ -6,7 +6,11 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting LifeLine database seeding...');
 
-  const defaultPassword = await bcrypt.hash('LifeLineSecure@2026', 10);
+  const seedPassword = process.env.SEED_DEFAULT_PASSWORD;
+  if (!seedPassword) {
+    throw new Error('SEED_DEFAULT_PASSWORD must be set before seeding.');
+  }
+  const defaultPassword = await bcrypt.hash(seedPassword, 10);
 
   // 1. Seed System Administrator
   const admin = await prisma.user.upsert({

@@ -12,7 +12,6 @@ import {
   ShieldCheck,
   Eye,
   EyeOff,
-  Sparkles,
   Check,
 } from 'lucide-react';
 
@@ -111,18 +110,6 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
     }
   };
 
-  const handleSampleFill = () => {
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    setFirstName('Rafiq');
-    setLastName('Hasan');
-    setEmail(`donor.test${randomSuffix}@lifeline.org.bd`);
-    setPhoneNumber(`017${Math.floor(10000000 + Math.random() * 90000000)}`);
-    setPassword('LifeLineSecure@2026');
-    setIsDonor(true);
-    setBloodGroup('O_POSITIVE');
-    setError(null);
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="fixed inset-0" onClick={onClose} />
@@ -141,18 +128,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
               LifeLine Registration
             </span>
           </div>
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-black">Join LifeLine Network</h2>
-            <button
-              type="button"
-              onClick={handleSampleFill}
-              className="text-[11px] font-bold bg-blood-600 hover:bg-blood-700 text-white px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm transition"
-              title="Autofill valid registration fields for testing"
-            >
-              <Sparkles className="w-3 h-3" />
-              1-Click Demo Fill
-            </button>
-          </div>
+          <h2 className="text-2xl font-black">Join LifeLine Network</h2>
           <p className="text-xs text-slate-300 mt-0.5">
             Register to request blood or save lives as a verified emergency donor.
           </p>
