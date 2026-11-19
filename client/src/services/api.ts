@@ -32,7 +32,13 @@ export const apiClient = async <T = unknown>(
   }));
 
   if (!response.ok) {
-    throw new Error(data.message || 'Request failed');
+    let errorMsg = data.message || 'Request failed';
+    if (Array.isArray(data.details) && data.details.length > 0) {
+      errorMsg = data.details.map((d: any) => d.message || d.field).join('. ');
+    } else if (typeof data.details === 'string') {
+      errorMsg = data.details;
+    }
+    throw new Error(errorMsg);
   }
 
   return data;

@@ -1,7 +1,20 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { CascadingLocationSelect, LocationValue } from '../common/CascadingLocationSelect';
-import { X, Lock, Mail, Phone, User as UserIcon, Heart, AlertCircle, ShieldCheck } from 'lucide-react';
+import {
+  X,
+  Lock,
+  Mail,
+  Phone,
+  User as UserIcon,
+  Heart,
+  AlertCircle,
+  ShieldCheck,
+  Eye,
+  EyeOff,
+  Sparkles,
+  Check,
+} from 'lucide-react';
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -21,6 +34,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isDonor, setIsDonor] = useState(true);
   const [bloodGroup, setBloodGroup] = useState('O_POSITIVE');
   const [gender, setGender] = useState<'MALE' | 'FEMALE' | 'OTHER'>('MALE');
@@ -46,17 +60,30 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
     { value: 'AB_NEGATIVE', label: 'AB-' },
   ];
 
+  // Password validation rules
+  const hasMinLength = password.length >= 8;
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasLowerCase = /[a-z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const isPasswordValid = hasMinLength && hasUpperCase && hasLowerCase && hasNumber;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!isPasswordValid) {
+      setError('Password must be at least 8 characters and include uppercase, lowercase, and a number.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const payload: Record<string, unknown> = {
         firstName,
         lastName,
-        email,
-        phoneNumber,
+        email: email.trim().toLowerCase(),
+        phoneNumber: phoneNumber.trim(),
         password,
         role: isDonor ? 'DONOR' : 'RECIPIENT',
       };
@@ -84,13 +111,22 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
     }
   };
 
+  const handleSampleFill = () => {
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    setFirstName('Rafiq');
+    setLastName('Hasan');
+    setEmail(`donor.test${randomSuffix}@lifeline.org.bd`);
+    setPhoneNumber(`017${Math.floor(10000000 + Math.random() * 90000000)}`);
+    setPassword('LifeLineSecure@2026');
+    setIsDonor(true);
+    setBloodGroup('O_POSITIVE');
+    setError(null);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div
-        className="fixed inset-0"
-        onClick={onClose}
-      />
-      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden z-10 max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
+      <div className="fixed inset-0" onClick={onClose} />
+      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden z-10 max-h-[92vh] flex flex-col animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="p-5 bg-gradient-to-r from-navy-900 to-navy-800 text-white relative flex-shrink-0">
           <button
@@ -105,7 +141,18 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
               LifeLine Registration
             </span>
           </div>
-          <h2 className="text-2xl font-black">Join LifeLine Network</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-black">Join LifeLine Network</h2>
+            <button
+              type="button"
+              onClick={handleSampleFill}
+              className="text-[11px] font-bold bg-blood-600 hover:bg-blood-700 text-white px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm transition"
+              title="Autofill valid registration fields for testing"
+            >
+              <Sparkles className="w-3 h-3" />
+              1-Click Demo Fill
+            </button>
+          </div>
           <p className="text-xs text-slate-300 mt-0.5">
             Register to request blood or save lives as a verified emergency donor.
           </p>
@@ -114,9 +161,9 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
         {/* Scrollable Form Body */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4 flex-1">
           {error && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span>{error}</span>
+            <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2.5 animate-in fade-in">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div className="leading-relaxed font-medium">{error}</div>
             </div>
           )}
 
@@ -132,7 +179,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="Rahim"
+                  placeholder="Rafiq"
                   required
                   className="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blood-500 focus:bg-white transition"
                 />
@@ -146,7 +193,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                placeholder="Ahmed"
+                placeholder="Hasan"
                 required
                 className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blood-500 focus:bg-white transition"
               />
@@ -165,7 +212,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="rahim@example.com"
+                  placeholder="rafiq@example.com"
                   required
                   className="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blood-500 focus:bg-white transition"
                 />
@@ -187,25 +234,64 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                   className="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blood-500 focus:bg-white transition"
                 />
               </div>
+              <span className="text-[10px] text-slate-400 mt-0.5 block">Format: 017XXXXXXXX or +88017XXXXXXXX</span>
             </div>
           </div>
 
           {/* Password */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Create Password (min. 8 characters) *
+              Create Password *
             </label>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
                 required
-                minLength={8}
-                className="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blood-500 focus:bg-white transition"
+                className="w-full pl-9 pr-10 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blood-500 focus:bg-white transition"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+
+            {/* Password Validation Pill Rules */}
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              <span
+                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 transition ${
+                  hasMinLength ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
+                }`}
+              >
+                {hasMinLength && <Check className="w-2.5 h-2.5" />} 8+ chars
+              </span>
+              <span
+                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 transition ${
+                  hasUpperCase ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
+                }`}
+              >
+                {hasUpperCase && <Check className="w-2.5 h-2.5" />} 1 uppercase (A-Z)
+              </span>
+              <span
+                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 transition ${
+                  hasLowerCase ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
+                }`}
+              >
+                {hasLowerCase && <Check className="w-2.5 h-2.5" />} 1 lowercase (a-z)
+              </span>
+              <span
+                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 transition ${
+                  hasNumber ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
+                }`}
+              >
+                {hasNumber && <Check className="w-2.5 h-2.5" />} 1 number (0-9)
+              </span>
             </div>
           </div>
 
@@ -295,7 +381,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 bg-blood-600 hover:bg-blood-700 active:bg-blood-800 disabled:opacity-50 text-white font-bold text-sm rounded-xl shadow-md shadow-blood-600/25 transition-all flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-blood-600 hover:bg-blood-700 active:bg-blood-800 disabled:opacity-50 text-white font-bold text-sm rounded-xl shadow-md shadow-blood-600/25 transition-all flex items-center justify-center gap-2"
           >
             {isSubmitting ? 'Registering...' : 'Complete Registration'}
           </button>
