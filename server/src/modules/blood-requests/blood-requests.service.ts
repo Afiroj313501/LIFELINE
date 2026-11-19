@@ -1,4 +1,5 @@
-import { Prisma, BloodRequest, RequestStatus, Role, DonorResponseStatus } from '@prisma/client';
+import { RBC_COMPATIBILITY } from '../matching/matching.service';
+
 import { prisma } from '../../services/prisma';
 import {
   CreateBloodRequestInput,
@@ -11,6 +12,8 @@ import {
   ForbiddenError,
   BadRequestError,
 } from '../../common/errors';
+
+import { RequestStatus, Role } from '@prisma/client';
 
 export interface PaginatedResult<T> {
   items: T[];
@@ -281,9 +284,17 @@ export class BloodRequestsService {
       throw new BadRequestError('This emergency request has already expired.');
     }
 
-    if (request.requesterId === donorId) {
-      throw new BadRequestError('You cannot respond as a donor to your own blood request.');
+    const donorProfile = await prisma.donorProfile.findUnique({
+      where: { userId: donorId },
+    });
+    if (!donorProfile) {
+      throw new BadRequestError('You must register your donor profile before pledging to donate.');
     }
+    // Compatibility check
+    if (!RBC_COMPATIBILITY[request.bloodGroup].includes(donorProfile.bloodGroup)) {
+      throw new BadRequestError('Blood not matched: Your blood group cannot be donated to the requested group.');
+    }
+
 
     // Upsert response and advance state machine to DONOR_RESPONDED if currently BROADCASTING or VERIFIED
     const updated = await prisma.$transaction(async (tx) => {
@@ -323,7 +334,7 @@ export class BloodRequestsService {
           donorResponses: {
             include: {
               donor: {
-                select: { firstName: true, lastName: true },
+                select: { firstName: true, lastName: true, phoneNumber: true },
               },
             },
           },

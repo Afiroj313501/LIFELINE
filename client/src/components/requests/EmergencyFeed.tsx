@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { apiClient } from '../../services/api';
+import { isBloodCompatible } from '../../data/bloodCompatibility';
 import {
   Heart,
   AlertCircle,
@@ -12,8 +13,9 @@ import {
   Flame,
   Search,
   Filter,
-  X
+  X,
 } from 'lucide-react';
+
 
 export interface EmergencyRequestItem {
   id: string;
@@ -269,19 +271,24 @@ export const EmergencyFeed: React.FC<EmergencyFeedProps> = ({
 
                   {/* Card Action Button */}
                   <div className="p-3 bg-slate-50 border-t border-slate-100">
-                    <button
-                      onClick={() => {
-                        if (!user && onRequireSignIn) {
-                          onRequireSignIn();
-                        } else {
-                          setRespondingId(req.id);
-                        }
-                      }}
-                      className="w-full py-2.5 px-4 rounded-xl bg-blood-600 hover:bg-blood-700 active:bg-blood-800 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2 group"
-                    >
-                      <HandHeart className="w-4 h-4 transition-transform group-hover:scale-110" />
-                      I Can Donate Blood
-                    </button>
+            <button
+              onClick={() => {
+                if (!user && onRequireSignIn) {
+                  onRequireSignIn();
+                  return;
+                }
+                // Compatibility check
+                if (user && !isBloodCompatible(user.bloodGroup as string, req.bloodGroup)) {
+                  setErrorMessage('Blood not matched: Your blood group cannot be donated to this request.');
+                  return;
+                }
+                setRespondingId(req.id);
+              }}
+              className="w-full py-2.5 px-4 rounded-xl bg-blood-600 hover:bg-blood-700 active:bg-blood-800 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2 group"
+            >
+              <HandHeart className="w-4 h-4 transition-transform group-hover:scale-110" />
+              I Can Donate Blood
+            </button>
                   </div>
                 </div>
               );

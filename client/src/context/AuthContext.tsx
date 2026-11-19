@@ -12,6 +12,7 @@ export interface User {
   avatarUrl?: string | null;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
+  bloodGroup?: string | null;
 }
 
 interface AuthContextType {
