@@ -86,7 +86,7 @@ export const EmergencyFeed: React.FC<EmergencyFeedProps> = ({
     setErrorMessage(null);
 
     try {
-      await apiClient(`/blood-requests/${respondingId}/respond`, {
+      await apiClient<any>(`/blood-requests/${respondingId}/respond`, {
         method: 'POST',
         body: JSON.stringify({
           unitsPledged: Number(unitsPledged),
@@ -94,7 +94,12 @@ export const EmergencyFeed: React.FC<EmergencyFeedProps> = ({
         }),
       });
 
-      setSuccessMessage('Thank you! Your donation pledge has been submitted. The requester has been notified.');
+      // Use the logged‑in user's phone number for the success message (fallback to API if available)
+      const phoneInfo = user.phoneNumber
+        ? ` Your phone number (${user.phoneNumber}) has been shared with the requester.`
+        : '';
+
+      setSuccessMessage(`Thank you! Your donation pledge has been submitted.${phoneInfo}`);
       setRespondingId(null);
       setDonorNote('');
       if (onRequestUpdated) onRequestUpdated();
@@ -277,8 +282,12 @@ export const EmergencyFeed: React.FC<EmergencyFeedProps> = ({
                   onRequireSignIn();
                   return;
                 }
+                if (!user?.bloodGroup) {
+                  setErrorMessage('Please complete your donor profile with a blood group before pledging.');
+                  return;
+                }
                 // Compatibility check
-                if (user && !isBloodCompatible(user.bloodGroup as string, req.bloodGroup)) {
+                if (!isBloodCompatible(user.bloodGroup as string, req.bloodGroup)) {
                   setErrorMessage('Blood not matched: Your blood group cannot be donated to this request.');
                   return;
                 }

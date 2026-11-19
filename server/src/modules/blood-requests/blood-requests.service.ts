@@ -13,7 +13,7 @@ import {
   BadRequestError,
 } from '../../common/errors';
 
-import { RequestStatus, Role } from '@prisma/client';
+import { Prisma, RequestStatus, Role, BloodRequest, DonorResponseStatus } from '@prisma/client';
 
 export interface PaginatedResult<T> {
   items: T[];

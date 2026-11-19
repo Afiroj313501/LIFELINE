@@ -120,6 +120,7 @@ export class AuthService {
               }
             : {}),
         },
+        include: { donorProfile: { select: { bloodGroup: true } } },
       });
 
       // Persist hashed refresh token
@@ -177,6 +178,7 @@ export class AuthService {
 
     const user = await prisma.user.findFirst({
       where: isPhone ? { phoneNumber: identifier } : { email: identifier },
+      include: { donorProfile: { select: { bloodGroup: true } } },
     });
 
     if (!user) {
@@ -248,7 +250,7 @@ export class AuthService {
 
     const existingToken = await prisma.refreshToken.findUnique({
       where: { tokenHash },
-      include: { user: true },
+      include: { user: { include: { donorProfile: { select: { bloodGroup: true } } } } },
     });
 
     if (!existingToken) {
@@ -350,6 +352,7 @@ export class AuthService {
   public async getCurrentUser(userId: string): Promise<SanitizedUser> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
+      include: { donorProfile: { select: { bloodGroup: true } } },
     });
 
     if (!user) {
