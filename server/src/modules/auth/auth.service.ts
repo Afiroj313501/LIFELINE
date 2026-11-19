@@ -1,4 +1,4 @@
-import { Role, User } from '@prisma/client';
+import { Role, User, BloodGroup } from '@prisma/client';
 import { prisma } from '../../services/prisma';
 import { hashPassword, comparePassword } from '../../utils/password';
 import {
@@ -39,10 +39,13 @@ export interface SanitizedUser {
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   avatarUrl: string | null;
+  bloodGroup?: BloodGroup | null;
   createdAt: Date;
 }
 
-export const sanitizeUser = (user: User): SanitizedUser => {
+export const sanitizeUser = (
+  user: User & { donorProfile?: { bloodGroup: BloodGroup } | null }
+): SanitizedUser => {
   return {
     id: user.id,
     email: user.email,
@@ -53,6 +56,7 @@ export const sanitizeUser = (user: User): SanitizedUser => {
     isEmailVerified: user.isEmailVerified,
     isPhoneVerified: user.isPhoneVerified,
     avatarUrl: user.avatarUrl,
+    bloodGroup: user.donorProfile?.bloodGroup ?? null,
     createdAt: user.createdAt,
   };
 };
