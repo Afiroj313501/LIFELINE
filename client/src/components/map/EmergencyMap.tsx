@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { BANGLADESH_CENTER, getLocationCoordinates } from '../../data/bangladeshGeo';
+import { LocateFixed, Loader2 } from 'lucide-react';
 
 export interface MapBloodRequest {
   id: string;
@@ -49,6 +50,55 @@ export const EmergencyMap: React.FC<EmergencyMapProps> = ({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
+  const userMarkerRef = useRef<L.Marker | null>(null);
+
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationStatus, setLocationStatus] = useState<string | null>(null);
+
+  // Directly locate user via browser GPS Geolocation
+  const locateUserDirectly = useCallback((zoomIn: boolean = true) => {
+    if (!navigator.geolocation) {
+      setLocationStatus('Geolocation is not supported by your browser');
+      return;
+    }
+
+    setIsLocating(true);
+    setLocationStatus('Locating your direct position...');
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserCoords({ lat: latitude, lng: longitude });
+        setIsLocating(false);
+        setLocationStatus('Direct location detected');
+
+        if (mapInstanceRef.current && zoomIn) {
+          mapInstanceRef.current.flyTo([latitude, longitude], 14, {
+            duration: 1.5,
+          });
+        }
+      },
+      (error) => {
+        setIsLocating(false);
+        let msg = 'Could not retrieve direct location';
+        if (error.code === error.PERMISSION_DENIED) {
+          msg = 'Location permission denied by browser';
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          msg = 'Location position unavailable';
+        } else if (error.code === error.TIMEOUT) {
+          msg = 'Location request timed out';
+        }
+        setLocationStatus(msg);
+        console.warn('Geolocation warning:', msg);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 30000,
+      }
+    );
+  }, []);
 
   // Initialize Map
   useEffect(() => {
@@ -72,20 +122,26 @@ export const EmergencyMap: React.FC<EmergencyMapProps> = ({
     markersLayerRef.current = markersLayer;
     mapInstanceRef.current = map;
 
+    // Auto-detect user direct location when map opens
+    locateUserDirectly(true);
+
     return () => {
       map.remove();
       mapInstanceRef.current = null;
       markersLayerRef.current = null;
+      userMarkerRef.current = null;
     };
-  }, []);
+  }, [locateUserDirectly]);
 
   // Update Center / Zoom on region change
   useEffect(() => {
     if (!mapInstanceRef.current) return;
-    const target = getLocationCoordinates(selectedDivision, selectedDistrict);
-    mapInstanceRef.current.flyTo([target.lat, target.lng], target.zoom, {
-      duration: 1.2,
-    });
+    if (selectedDivision || selectedDistrict) {
+      const target = getLocationCoordinates(selectedDivision, selectedDistrict);
+      mapInstanceRef.current.flyTo([target.lat, target.lng], target.zoom, {
+        duration: 1.2,
+      });
+    }
   }, [selectedDivision, selectedDistrict]);
 
   // Render Markers
@@ -145,6 +201,14 @@ export const EmergencyMap: React.FC<EmergencyMapProps> = ({
           >
             View Details
           </button>
+          <a
+            href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${req.hospitalName}, ${req.upazila}, ${req.district}, Bangladesh`)}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="mt-1.5 block w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold py-1 px-2 rounded text-center transition border border-slate-200"
+          >
+            📍 Direct Google Maps
+          </a>
         </div>
       `;
 
@@ -193,16 +257,79 @@ export const EmergencyMap: React.FC<EmergencyMapProps> = ({
       circle.bindPopup(popupHtml);
       layer.addLayer(circle);
     });
-  }, [requests, donors, onRequestSelect]);
+
+    // Render User Direct Location Marker if available
+    if (userCoords) {
+      const userIcon = L.divIcon({
+        className: 'custom-user-marker',
+        html: `
+          <div class="relative flex items-center justify-center w-8 h-8">
+            <span class="absolute w-8 h-8 rounded-full bg-blue-500 opacity-70 animate-ping"></span>
+            <span class="relative w-5 h-5 rounded-full bg-blue-600 border-2 border-white shadow-xl flex items-center justify-center">
+              <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+            </span>
+          </div>
+        `,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      });
+
+      const userMarker = L.marker([userCoords.lat, userCoords.lng], {
+        icon: userIcon,
+        zIndexOffset: 1000,
+      });
+
+      userMarker.bindPopup(`
+        <div class="p-2 min-w-[170px] text-slate-800 font-sans text-xs">
+          <div class="flex items-center gap-1.5 font-bold text-blue-600 mb-1 border-b pb-1">
+            <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+            Your Direct GPS Location
+          </div>
+          <p class="text-xs text-slate-600">You are currently located here.</p>
+          <p class="text-[10px] text-slate-400 mt-1">Lat: ${userCoords.lat.toFixed(4)}, Lng: ${userCoords.lng.toFixed(4)}</p>
+        </div>
+      `);
+
+      layer.addLayer(userMarker);
+    }
+  }, [requests, donors, onRequestSelect, userCoords]);
 
   return (
     <div className="relative w-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-slate-50">
       <div ref={mapContainerRef} style={{ height }} className="w-full z-0" />
 
+      {/* Direct Location Button Overlay */}
+      <div className="absolute top-4 right-4 z-[1000] flex flex-col items-end gap-1.5">
+        <button
+          type="button"
+          onClick={() => locateUserDirectly(true)}
+          disabled={isLocating}
+          className="inline-flex items-center gap-2 px-3 py-2 bg-white/95 hover:bg-white text-navy-900 hover:text-blood-600 text-xs font-bold rounded-xl shadow-md border border-slate-200 transition backdrop-blur-sm active:scale-95 disabled:opacity-60"
+          title="Detect and center your direct GPS location"
+        >
+          {isLocating ? (
+            <Loader2 className="w-4 h-4 animate-spin text-blood-600" />
+          ) : (
+            <LocateFixed className="w-4 h-4 text-blood-600" />
+          )}
+          <span>{userCoords ? 'My Direct Location' : 'Direct Location'}</span>
+        </button>
+
+        {locationStatus && (
+          <div className="bg-navy-900/90 text-white text-[10px] px-2.5 py-1 rounded-lg backdrop-blur-sm shadow animate-in fade-in max-w-xs text-right">
+            {locationStatus}
+          </div>
+        )}
+      </div>
+
       {/* Map Legend */}
       <div className="absolute bottom-4 left-4 z-[1000] bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-md border border-slate-200 text-xs space-y-1.5 max-w-xs">
         <div className="font-bold text-slate-800 text-[11px] uppercase tracking-wider mb-1">
           Live Emergency Map Legend
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-3.5 h-3.5 rounded-full bg-blue-600 ring-2 ring-blue-300"></span>
+          <span className="text-slate-600 font-medium">Your Direct GPS Position</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-3.5 h-3.5 rounded-full bg-red-600 ring-2 ring-red-300"></span>

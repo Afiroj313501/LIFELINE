@@ -14,6 +14,7 @@ import {
   Search,
   Filter,
   X,
+  Navigation,
 } from 'lucide-react';
 
 
@@ -242,9 +243,21 @@ export const EmergencyFeed: React.FC<EmergencyFeedProps> = ({
 
                     {/* Location & Hospital */}
                     <div className="space-y-2 py-3 border-y border-slate-100 text-xs">
-                      <div className="flex items-start gap-2 text-slate-700">
-                        <Building2 className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
-                        <span className="font-semibold">{req.hospitalName}</span>
+                      <div className="flex items-start justify-between gap-2 text-slate-700">
+                        <div className="flex items-start gap-2">
+                          <Building2 className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
+                          <span className="font-semibold">{req.hospitalName}</span>
+                        </div>
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${req.hospitalName}, ${req.upazila}, ${req.district}, Bangladesh`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-blood-600 hover:text-blood-700 bg-blood-50 hover:bg-blood-100 px-2 py-0.5 rounded-lg transition shrink-0"
+                          title="Open direct location in Google Maps"
+                        >
+                          <Navigation className="w-3 h-3" />
+                          Direct Map
+                        </a>
                       </div>
                       <div className="flex items-center gap-2 text-slate-600">
                         <MapPin className="w-4 h-4 text-blood-500 flex-shrink-0" />
@@ -326,6 +339,37 @@ export const EmergencyFeed: React.FC<EmergencyFeedProps> = ({
                 Confirming will notify the patient's family and hospital staff that you intend to donate.
                 Only pledge if you are medically healthy and available to reach the hospital.
               </p>
+
+              {/* Direct Hospital Location Details in Modal */}
+              {(() => {
+                const currentReq = requests.find((r) => r.id === respondingId);
+                if (!currentReq) return null;
+                return (
+                  <div className="mb-4 p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="font-bold text-navy-900 flex items-center gap-1.5">
+                          <Building2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                          <span>{currentReq.hospitalName}</span>
+                        </div>
+                        <div className="text-slate-500 text-[11px] mt-0.5 flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-blood-500 shrink-0" />
+                          <span>{currentReq.upazila}, {currentReq.district}, {currentReq.division}</span>
+                        </div>
+                      </div>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${currentReq.hospitalName}, ${currentReq.upazila}, ${currentReq.district}, Bangladesh`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-white bg-blood-600 hover:bg-blood-700 rounded-lg shadow-sm transition shrink-0"
+                      >
+                        <Navigation className="w-3 h-3" />
+                        Direct Map
+                      </a>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {modalError && (
                 <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
