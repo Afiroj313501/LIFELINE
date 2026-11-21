@@ -121,10 +121,6 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  useEffect(() => {
-    void loadRequests();
-  }, [loadRequests]);
-
   // Privacy-masked sample donors
   const sampleDonors: MapDonorLocation[] = [
     {
@@ -165,6 +161,33 @@ export const App: React.FC = () => {
     },
   ];
 
+  const [mapDonors, setMapDonors] = useState<MapDonorLocation[]>(sampleDonors);
+
+  const loadDonors = useCallback(async () => {
+    try {
+      const response = await apiClient<{ items: any[] }>('/donors/search?limit=50');
+      if (response.data?.items && response.data.items.length > 0) {
+        const mapped: MapDonorLocation[] = response.data.items.map((d) => ({
+          id: d.id,
+          displayName: d.displayName,
+          bloodGroup: d.bloodGroup,
+          division: d.division,
+          district: d.district,
+          upazila: d.upazila,
+          totalDonations: d.totalDonations,
+        }));
+        setMapDonors(mapped);
+      }
+    } catch {
+      // Keep sample donors visible if API is unavailable
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadRequests();
+    void loadDonors();
+  }, [loadRequests, loadDonors]);
+
   useEffect(() => {
     // Check connection with backend proxy /api/v1/health or /health
     fetch('/health')
@@ -196,7 +219,7 @@ export const App: React.FC = () => {
     return true;
   });
 
-  const filteredDonors = sampleDonors.filter((donor) => {
+  const filteredDonors = mapDonors.filter((donor) => {
     if (locationFilter.division && donor.division !== locationFilter.division) return false;
     if (locationFilter.district && donor.district !== locationFilter.district) return false;
     return true;
