@@ -15,7 +15,7 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
     .default('development'),
-  CLIENT_URL: z.string().url().default('http://localhost:5173'),
+  CLIENT_URL: z.string().default('http://localhost:5173'),
   API_PREFIX: z.string().default('/api/v1'),
   DATABASE_URL: z
     .string()

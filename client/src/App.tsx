@@ -189,8 +189,9 @@ export const App: React.FC = () => {
   }, [loadRequests, loadDonors]);
 
   useEffect(() => {
-    // Check connection with backend proxy /api/v1/health or /health
-    fetch('/health')
+    // Check connection with backend proxy /health or remote API
+    const apiBase = import.meta.env.VITE_API_URL || '';
+    fetch(`${apiBase}/health`)
       .then((res) => {
         if (res.ok) setApiStatus('connected');
         else setApiStatus('disconnected');

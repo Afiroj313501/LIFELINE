@@ -10,9 +10,24 @@ export interface AuthenticatedSocket extends Socket {
 let io: SocketIOServer | null = null;
 
 export const initSocketServer = (httpServer: HttpServer): SocketIOServer => {
+  const allowedOrigins = env.CLIENT_URL
+    ? env.CLIENT_URL.split(',').map((o) => o.trim())
+    : ['http://localhost:5173'];
+
   io = new SocketIOServer(httpServer, {
     cors: {
-      origin: env.CLIENT_URL,
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (
+          allowedOrigins.includes(origin) ||
+          allowedOrigins.includes('*') ||
+          origin.includes('localhost') ||
+          origin.endsWith('.vercel.app')
+        ) {
+          return callback(null, true);
+        }
+        return callback(null, true);
+      },
       credentials: true,
       methods: ['GET', 'POST'],
     },

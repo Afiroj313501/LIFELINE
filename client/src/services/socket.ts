@@ -4,7 +4,8 @@ let socket: Socket | null = null;
 
 export const getSocket = (token?: string): Socket => {
   if (!socket) {
-    socket = io(window.location.origin, {
+    const socketUrl = import.meta.env.VITE_API_URL || window.location.origin;
+    socket = io(socketUrl, {
       path: '/socket.io',
       auth: { token },
       autoConnect: true,
